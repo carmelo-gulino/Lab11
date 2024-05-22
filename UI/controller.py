@@ -30,7 +30,7 @@ class Controller:
             color = self._view._ddcolor.value
             self._model.build_graph(year, color)
             self.print_graph()
-            self.fillDDProduct()  #riempo il menu a tendina con i nodi del grafo
+            self.fillDDProduct()  # riempo il menu a tendina con i nodi del grafo
 
     def print_graph(self):
         self._view.txtOut2.controls.clear()
@@ -42,7 +42,7 @@ class Controller:
         self._view.update_page()
 
     def fillDDProduct(self):
-        opts = list(map(lambda x: ft.dropdown.Option(x), self._model.products_graph.nodes))  #naggiungo i nodi al DD
+        opts = list(map(lambda x: ft.dropdown.Option(x), self._model.products_graph.nodes))  # naggiungo i nodi al DD
         self._view._ddnode.options = opts
         self._view.update_page()
 

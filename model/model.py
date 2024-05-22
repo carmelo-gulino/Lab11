@@ -16,11 +16,12 @@ class Model:
         self.duplicati = set()
         self.soluzioni = []
         self.sol_best = None
+        self.peso_cumulato = None   # cumulato per caching
 
     def build_graph(self, year, color):
-        self.max_weight = []  #resetto la lista dei max
-        self.duplicati = set()  #resetto l'insieme dei duplicati
-        self.products_graph.clear()  #resetto il grafo
+        self.max_weight = []  # resetto la lista dei max
+        self.duplicati = set()  # resetto l'insieme dei duplicati
+        self.products_graph.clear()  # resetto il grafo
         for p in self.products:  # scandisco i prodotti e aggiungo il nodo se il colore corrisponde
             if p.Product_color == color:
                 self.products_graph.add_node(p)
@@ -28,7 +29,7 @@ class Model:
             for pp in self.products_graph.nodes:
                 if p != pp:  # controllo solo i nodi diversi
                     peso = DAO.get_n_sales(p, pp, year)
-                    if peso > 0:  #controllo sia stato venduto da almeno due
+                    if peso > 0:  # controllo sia stato venduto da almeno due
                         self.products_graph.add_edge(p, pp, weight=peso)
         self.check_max()
 
@@ -41,7 +42,7 @@ class Model:
                 self.max_weight.append(arco)
             else:
                 arco_min = min(self.max_weight, key=lambda x: x[2]["weight"])
-                if arco[2]["weight"] > arco_min[2]["weight"]:  #solo se il peso è maggiore di quello trovato
+                if arco[2]["weight"] > arco_min[2]["weight"]:  # solo se il peso è maggiore di quello trovato
                     self.max_weight.append(arco)
                     self.max_weight.remove(arco_min)
         self.check_duplicati()
@@ -57,7 +58,7 @@ class Model:
                         self.duplicati.add(arco[0])
                     elif arco[1] == arco2[1]:
                         self.duplicati.add(arco[1])
-        self.duplicati = list(self.duplicati)  #creo una lista dall'insieme per la stampa
+        self.duplicati = list(self.duplicati)  # creo una lista dall'insieme per la stampa
 
     def num_nodes(self):
         return len(self.products_graph.nodes)
@@ -66,16 +67,31 @@ class Model:
         return len(self.products_graph.edges)
 
     def get_percorso(self, v0):
+        self.peso_cumulato = 0
         self.ricorsione(v0, v0, set())
 
     def ricorsione(self, nodo, prec, parziale):
-        for neighbor in self.products_graph[nodo]:  #guardo tutti i vicini del nodo
-            if len(self.products_graph[nodo]) == 1:   #se ho un solo vicino
-                vicino = self.products_graph[nodo][0]
-                if vicino == prec:  # se il vicino è uguale al precedente, ho trovato una soluzione
-                    self.soluzioni.append(copy.deepcopy(parziale))  #aggiungo alla lista di soluzioni
-            else:
+        # CASO BANALE: se ho un solo vicino ed è uguale al precedente, ho trovato una soluzione
+        if len(self.products_graph[nodo]) == 1:  # se ho un solo vicino
+            vicino = self.products_graph[nodo][0]   # estraggo il vicino
+            if vicino == prec:  # se il vicino è uguale al precedente, ho trovato una soluzione
+                self.soluzioni.append(copy.deepcopy(parziale))  # aggiungo alla lista di soluzioni
+        # CASO RICORSIVO
+        else:
+            for neighbor in self.products_graph[nodo]:  # guardo tutti i vicini del nodo
                 parziale.add(neighbor)
-                prec = neighbor
-                self.ricorsione(nodo, prec, parziale)
+                arco = self.products_graph[nodo][neighbor]
+                peso = arco["weight"]
+                self.peso_cumulato += peso
+                if self.check_peso(peso):   # controllo che l'arco aggiunto vada bene
+                    prec = neighbor
+                    self.ricorsione(nodo, prec, parziale)
+                parziale.remove(neighbor)
+                self.peso_cumulato -= peso
+
+    def check_peso(self, peso):
+        if peso > self.peso_cumulato:
+            return True
+        else:
+            return False
 
