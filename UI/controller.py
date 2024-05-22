@@ -29,10 +29,23 @@ class Controller:
             year = int(self._view._ddyear.value)
             color = self._view._ddcolor.value
             self._model.build_graph(year, color)
+            self.print_graph()
+            self.fillDDProduct()  #riempo il menu a tendina con i nodi del grafo
 
+    def print_graph(self):
+        self._view.txtOut2.controls.clear()
+        self._view.txtOut2.controls.append(ft.Text(f"Numero di vertici: {self._model.num_nodes()} "
+                                                   f"Numero di archi: {self._model.num_edges()}"))
+        for arco in self._model.max_weight:
+            self._view.txtOut2.controls.append(ft.Text(f"Arco da {arco[0]} a {arco[1]}, peso={arco[2]}"))
+        self._view.txtOut2.controls.append(ft.Text(f"I nodi ripetuti sono: {self._model.duplicati}"))
+        self._view.update_page()
 
     def fillDDProduct(self):
-        pass
+        opts = list(map(lambda x: ft.dropdown.Option(x), self._model.products_graph.nodes))  #naggiungo i nodi al DD
+        self._view._ddnode.options = opts
+        self._view.update_page()
 
     def handle_search(self, e):
-        pass
+        v0 = self._view._ddnode.value
+        self._model.get_percorso(v0)

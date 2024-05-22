@@ -19,36 +19,20 @@ class DAO:
         return result
 
     @staticmethod
-    def get_all_sales():
-        """
-        Restituisce il codice prodotto e il numero di retailer che l'hanno venduto per ogni data
-        """
-        cnx = DBConnect.get_connection()
-        cursor = cnx.cursor(dictionary=True)
-        query = """select *
-                    from go_daily_sales gds"""
-        cursor.execute(query)
-        result = []
-        for row in cursor:
-            result.append(Sale(**row))
-        cursor.close()
-        cnx.close()
-        return result
-
-    @staticmethod
     def get_n_sales(p1, p2, year):
         """
-        Restituisce il codice prodotto e il numero di retailer che l'hanno venduto per ogni data
+        Restituisce il numero di vendite in giorni diversi di una coppia di prodotti per lo stesso retailer
         """
         cnx = DBConnect.get_connection()
         cursor = cnx.cursor(dictionary=True)
-        query = """select count(distinct gds2.`Date`) from go_daily_sales gds, go_daily_sales gds2 where 
-        gds.Product_number = %s and gds2.Product_number = %s and gds.Retailer_code = gds2.Retailer_code and 
+        query = """select count(distinct gds2.`Date`) vendite
+        from go_daily_sales gds, go_daily_sales gds2 
+        where gds.Product_number = %s and gds2.Product_number = %s and gds.Retailer_code = gds2.Retailer_code and 
         gds.Date = gds2.`Date` and year(gds.Date) = %s"""
         cursor.execute(query, (p1.Product_number, p2.Product_number, year))
-        result = []
+        result = None
         for row in cursor:
-            result.append(Sale(**row))
+            result = row["vendite"]
         cursor.close()
         cnx.close()
         return result

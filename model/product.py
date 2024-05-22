@@ -13,7 +13,10 @@ class Product:
     Unit_price: float
 
     def __str__(self):
-        return f"{self.Product} - {self.Product_color}"
+        return f"{self.Product_number}"
+
+    def __repr__(self):
+        return f"{self.Product_number}"
 
     def __hash__(self):
         return hash(self.Product_number)
