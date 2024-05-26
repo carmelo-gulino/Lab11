@@ -5,12 +5,28 @@ from model.sale import Sale
 
 class DAO:
     @staticmethod
-    def get_all_products():
+    def get_all_colors():
+        cnx = DBConnect.get_connection()
+        cursor = cnx.cursor(dictionary=True)
+        query = """select distinct gp.Product_color 
+                    from go_products gp
+                    order by gp.Product_color"""
+        cursor.execute(query)
+        result = []
+        for row in cursor:
+            result.append(row['Product_color'])
+        cursor.close()
+        cnx.close()
+        return result
+
+    @staticmethod
+    def get_products_by_color(color):
         cnx = DBConnect.get_connection()
         cursor = cnx.cursor(dictionary=True)
         query = """select * 
-                    from go_products gp"""
-        cursor.execute(query)
+                    from go_products gp
+                    where gp.Product_color = %s"""
+        cursor.execute(query, (color,))
         result = []
         for row in cursor:
             result.append(Product(**row))

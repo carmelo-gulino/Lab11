@@ -8,7 +8,7 @@ class Controller:
         # the model, which implements the logic of the program and holds the data
         self._model = model
         self._listYear = [2015, 2016, 2017, 2018]
-        self._listColor = set(product.Product_color for product in self._model.products)
+        self._listColor = self._model.colors
 
     def fillDD(self):
         """
@@ -33,19 +33,36 @@ class Controller:
             self.fillDDProduct()  #riempo il menu a tendina con i nodi del grafo
 
     def print_graph(self):
-        self._view.txtOut2.controls.clear()
-        self._view.txtOut2.controls.append(ft.Text(f"Numero di vertici: {self._model.num_nodes()} "
-                                                   f"Numero di archi: {self._model.num_edges()}"))
+        self._view.txtOut.controls.clear()
+        self._view.txtOut.controls.append(ft.Text(f"Numero di vertici: {self._model.num_nodes()} "
+                                                  f"Numero di archi: {self._model.num_edges()}"))
         for arco in self._model.max_weight:
-            self._view.txtOut2.controls.append(ft.Text(f"Arco da {arco[0]} a {arco[1]}, peso={arco[2]}"))
-        self._view.txtOut2.controls.append(ft.Text(f"I nodi ripetuti sono: {self._model.duplicati}"))
+            self._view.txtOut.controls.append(ft.Text(f"Arco da {arco[0]} a {arco[1]}, peso={arco[2]["weight"]}"))
+        self._view.txtOut.controls.append(ft.Text(f"I nodi ripetuti sono: {self._model.duplicati}"))
         self._view.update_page()
 
     def fillDDProduct(self):
-        opts = list(map(lambda x: ft.dropdown.Option(x), self._model.products_graph.nodes))  #naggiungo i nodi al DD
-        self._view._ddnode.options = opts
+        self._view._ddnode.options.clear()
+        for product in self._model.products_graph.nodes:
+            self._view._ddnode.options.append(ft.dropdown.Option(
+                data=product,
+                text=product.Product_number,
+                on_click=self.read_product
+            ))
         self._view.update_page()
 
+    def read_product(self, e):
+        self._view._ddnode.data = e.control.data
+
     def handle_search(self, e):
-        v0 = self._view._ddnode.value
-        self._model.get_percorso(v0)
+        if self._view._ddnode.data is None:
+            self._view.create_alert("Selezionare un prodotto")
+        else:
+            v0 = self._view._ddnode.data
+            self._model.get_percorso(v0)
+            self.print_search()
+
+    def print_search(self):
+        self._view.txtOut2.controls.clear()
+        self._view.txtOut2.controls.append(ft.Text(f"Numero di archi percorso più lungo: {len(self._model.soluzione)}"))
+        self._view.update_page()

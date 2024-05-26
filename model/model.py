@@ -7,23 +7,19 @@ from database.DAO import DAO
 
 class Model:
     def __init__(self):
-        self.products = DAO.get_all_products()
-        self.products_map = {}
-        for p in self.products:
-            self.products_map[p.Product_number] = p
+        self.colors = DAO.get_all_colors()
+        self.products_by_color = []
         self.products_graph = nx.Graph()
         self.max_weight = []
         self.duplicati = set()
-        self.soluzioni = []
-        self.sol_best = None
+        self.soluzione = []
 
     def build_graph(self, year, color):
         self.max_weight = []  #resetto la lista dei max
         self.duplicati = set()  #resetto l'insieme dei duplicati
         self.products_graph.clear()  #resetto il grafo
-        for p in self.products:  # scandisco i prodotti e aggiungo il nodo se il colore corrisponde
-            if p.Product_color == color:
-                self.products_graph.add_node(p)
+        self.products_by_color = DAO.get_products_by_color(color)
+        self.products_graph.add_nodes_from(self.products_by_color)
         for p in self.products_graph.nodes:
             for pp in self.products_graph.nodes:
                 if p != pp:  # controllo solo i nodi diversi
@@ -34,13 +30,13 @@ class Model:
 
     def check_max(self):
         """
-        Scandisce gli archi e vede quelli con peso maggiore, facendo attenzione ai duplicati
+        Scandisce gli archi e vede quelli con peso maggiore
         """
         for arco in self.products_graph.edges.data():
             if len(self.max_weight) < 3:
                 self.max_weight.append(arco)
             else:
-                arco_min = min(self.max_weight, key=lambda x: x[2]["weight"])
+                arco_min = min(self.max_weight, key=lambda x: x[2]["weight"])  #estraggo l'arco di peso minimo
                 if arco[2]["weight"] > arco_min[2]["weight"]:  #solo se il peso è maggiore di quello trovato
                     self.max_weight.append(arco)
                     self.max_weight.remove(arco_min)
@@ -57,6 +53,10 @@ class Model:
                         self.duplicati.add(arco[0])
                     elif arco[1] == arco2[1]:
                         self.duplicati.add(arco[1])
+                    elif arco[0] == arco2[1]:
+                        self.duplicati.add(arco[1])
+                    elif arco[1] == arco2[0]:
+                        self.duplicati.add(arco[1])
         self.duplicati = list(self.duplicati)  #creo una lista dall'insieme per la stampa
 
     def num_nodes(self):
@@ -66,16 +66,24 @@ class Model:
         return len(self.products_graph.edges)
 
     def get_percorso(self, v0):
-        self.ricorsione(v0, v0, set())
+        self.ricorsione(v0, [], [0])
 
-    def ricorsione(self, nodo, prec, parziale):
-        for neighbor in self.products_graph[nodo]:  #guardo tutti i vicini del nodo
-            if len(self.products_graph[nodo]) == 1:   #se ho un solo vicino
-                vicino = self.products_graph[nodo][0]
-                if vicino == prec:  # se il vicino è uguale al precedente, ho trovato una soluzione
-                    self.soluzioni.append(copy.deepcopy(parziale))  #aggiungo alla lista di soluzioni
-            else:
-                parziale.add(neighbor)
-                prec = neighbor
-                self.ricorsione(nodo, prec, parziale)
+    def ricorsione(self, source, parziale, pesi_max):
+        if len(parziale) > len(self.soluzione):
+            self.soluzione = copy.deepcopy(parziale)
+            print(parziale)
+        for neighbor in self.products_graph.neighbors(source):
+            peso = self.products_graph[source][neighbor]["weight"]
+            if self.check(neighbor, source, parziale) and peso >= pesi_max[len(parziale)]:
+                pesi_max.append(peso)
+                parziale.append((neighbor, source))
+                self.ricorsione(neighbor, parziale, pesi_max)
+                parziale.pop()
+                pesi_max.pop()
 
+    def check(self, neighbor, prec, parziale):
+        for tupla in parziale:
+            if (tupla[0] == neighbor and tupla[1] == prec) or (
+                    tupla[0] == prec and tupla[1] == neighbor) or neighbor == prec:
+                return False
+        return True
