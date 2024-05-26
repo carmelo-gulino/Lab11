@@ -28,7 +28,7 @@ class View(ft.UserControl):
         self._title = ft.Text("TdP 2024 - Lab11: Prova tema d'esame", color="blue", size=24)
         self._page.controls.append(self._title)
 
-        #ROW with some controls
+        # ROW with some controls
         # text field for the name
         self._ddyear = ft.Dropdown(label="Anno")
         self._ddcolor = ft.Dropdown(label="Colore")

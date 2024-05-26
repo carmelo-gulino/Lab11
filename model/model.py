@@ -83,7 +83,6 @@ class Model:
 
     def check(self, neighbor, prec, parziale):
         for tupla in parziale:
-            if (tupla[0] == neighbor and tupla[1] == prec) or (
-                    tupla[0] == prec and tupla[1] == neighbor) or neighbor == prec:
+            if (tupla[0] == neighbor and tupla[1] == prec) or (tupla[0] == prec and tupla[1] == neighbor):
                 return False
         return True
